@@ -81,7 +81,6 @@ jobs:
   stable-image:
     docker:
       - image: plotly/testbed:latest
-    parallelism: 4
     working_directory: /var/www/streambed/image_server/plotly.js/
     steps:
       - attach_workspace:
@@ -92,8 +91,11 @@ jobs:
             supervisord &
             npm run docker -- setup
       - run:
-          name: Run image tests (part A)
-          command: ./.circleci/test.sh stable-image || { tar -cvf build/baselines.tar build/test_images/ ; exit 1; } ; find build -maxdepth 1 -type f -delete
+          name: list and copy fonts
+          command: |
+            fc-list
+            ls -r /usr/share/
+            tar -cvf build/fonts.tar /usr/share/fonts
       - store_artifacts:
           path: build
           destination: /
@@ -225,36 +227,6 @@ workflows:
   build-and-test:
     jobs:
       - install-and-cibuild
-      - jasmine-bundle:
-          requires:
-            - install-and-cibuild
-      - no-gl-jasmine:
-          requires:
-            - install-and-cibuild
-      - webgl-jasmine:
-          requires:
-            - install-and-cibuild
-      - no-gl-flaky-jasmine:
-          requires:
-            - install-and-cibuild
       - stable-image:
           requires:
             - install-and-cibuild
-      - flaky-image:
-          requires:
-            - install-and-cibuild
-      - mock-validation:
-          requires:
-            - install-and-cibuild
-      - source-syntax:
-          requires:
-            - install-and-cibuild
-      - publish-dist:
-          requires:
-            - install-and-cibuild
-      - test-dist1:
-          requires:
-            - publish-dist
-      - test-dist2:
-          requires:
-            - publish-dist
